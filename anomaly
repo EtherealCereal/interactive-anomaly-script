@@ -1,0 +1,90 @@
+#!/bin/bash
+#
+# This is a bash script to trigger some anomalies
+# The events can be found in event search: "arguments ends_with "Hello Anomaly" AND tty != null"
+# Anomalies will be listed by process: "/temp/YYYY-MM-DD_HH:MM:SS_XXXX -> XXXXXXXXXXXX"
+###
+
+logger "Yo! Running the anomaly detection scripts... via cron.hourly"
+
+# these could be useful so leaving them
+DATE=$(date)
+base_dir=$(pwd)
+
+# Define a timestamp function
+timestamp(){
+    date +%s
+}
+
+#
+# setup environment
+#
+setup_env(){
+    echo "Do anomaly detection setup."
+    # Generate an ssh key
+    echo "Generate an ssh key"
+    export ssh_user=$USER
+    echo "$ssh_user"
+    export key_path="/tmp/sshkey_$(timestamp)"
+    echo "$key_path"
+    sudo -H -u ${ssh_user} ssh-keygen -t rsa -b 4096 -f ${key_path} -q -N ""
+    cat ${key_path}.pub > ~/.ssh/authorized_keys
+
+    logger "Yo! Finished setting up the anomaly detection script."
+}
+
+#
+# cleanup environment
+#
+clean_env(){
+    echo "Do the anomaly detection cleanup stuff."
+    echo "removing tmp files"
+    rm /tmp/202*
+    rm /tmp/sshkey_*
+    logger "Yo! Finished cleaning up the anomaly detection script."
+
+}
+
+# Generate Anomalies:
+# copies /bin/echo into a unique tmp file and executes it
+anomaly(){
+    echo "Creating 10 anamalous processes!"
+    tmp1=$(mktemp $(date +"%Y-%m-%d_%T_XXXX")) && cp /bin/echo /tmp/$tmp1 && chmod +x /tmp/$tmp1 && /tmp/./$tmp1 Hello Anomaly
+    tmp2=$(mktemp $(date +"%Y-%m-%d_%T_XXXXX")) && cp /bin/echo /tmp/$tmp2 && chmod +x /tmp/$tmp2 && /tmp/./$tmp2 Hello Anomaly
+    tmp3=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXX")) && cp /bin/echo /tmp/$tmp3 && chmod +x /tmp/$tmp3 && /tmp/./$tmp3 Hello Anomaly
+    tmp4=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXX")) && cp /bin/echo /tmp/$tmp4 && chmod +x /tmp/$tmp4 && /tmp/./$tmp4 Hello Anomaly
+    tmp5=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXXX")) && cp /bin/echo /tmp/$tmp5 && chmod +x /tmp/$tmp5 && /tmp/./$tmp5 Hello Anomaly
+    tmp6=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXXXX")) && cp /bin/echo /tmp/$tmp6 && chmod +x /tmp/$tmp6 && /tmp/./$tmp6 Hello Anomaly
+    tmp7=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXXXXX")) && cp /bin/echo /tmp/$tmp7 && chmod +x /tmp/$tmp7 && /tmp/./$tmp7 Hello Anomaly
+    tmp8=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXXXXXX")) && cp /bin/echo /tmp/$tmp8 && chmod +x /tmp/$tmp8 && /tmp/./$tmp8 Hello Anomaly
+    tmp9=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXXXXXXX")) && cp /bin/echo /tmp/$tmp9 && chmod +x /tmp/$tmp9 && /tmp/./$tmp9 Hello Anomaly
+    tmp10=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXXXXXXX")) && cp /bin/echo /tmp/$tmp10 && chmod +x /tmp/$tmp10 && /tmp/./$tmp10 Hello Anomaly
+    tmp11=$(mktemp "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX") && cp /bin/echo /tmp/$tmp11 && chmod +x /tmp/$tmp11 && /tmp/./$tmp11 Hello Unmatched Anomaly
+}
+
+# Open SSH connection and run interactively.
+interactive(){
+        echo "Run as interactive so tty != null"
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${key_path} -tt ${ssh_user}@localhost "$(typeset -f); $1"
+}
+
+# ADD NEW USER and BE NEW USER
+add_user(){
+        new_user="user$(cat /dev/urandom | tr -dc 'a-z' | fold -w 6 | head -n 1)"
+        echo "creating user: $new_user"
+        sudo adduser $new_user --gecos "First Last,RoomNumber,WorkPhone,HomePhone" --disabled-password
+        echo "$new_user:password" | sudo chpasswd
+        sudo mkdir /home/$new_user/.ssh/
+        sudo chmod 644 /home/$new_user/.ssh/
+        sudo -- sh -c "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILaLvLmaW9qIbUVo1aDHWZE9JewbNfIdTVif2aFGF0E0 $new_user@localhost' > /home/$new_user/.ssh/authorized_keys"
+        sudo su $new_user
+}
+
+echo "Setting up environment..."
+setup_env 2>&1
+sleep 2
+interactive anomaly 2>&1
+# execute more functions here
+#add_user
+echo "Cleaning Environment..."
+clean_env 2>&1
