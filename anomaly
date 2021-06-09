@@ -2,10 +2,10 @@
 #
 # This is a bash script to trigger some anomalies
 # The events can be found in event search: "arguments ends_with "Hello Anomaly" AND tty != null"
-# Anomalies will be listed by process: "/temp/YYYY-MM-DD_HH:MM:SS_XXXX -> XXXXXXXXXXXX"
+# Anomalies will be listed by process: "/tmp/YYYY-MM-DD_HH:MM:SS_XXXX -> XXXXXXXXXXXX"
 ###
 
-logger "Yo! Running the anomaly detection scripts... via cron.hourly"
+logger "Running the anomaly detection scripts... via cron.hourly"
 
 # these could be useful so leaving them
 DATE=$(date)
@@ -40,6 +40,7 @@ clean_env(){
     echo "Do the anomaly detection cleanup stuff."
     echo "removing tmp files"
     rm /tmp/202*
+    rm /tmp/NORULE*
     rm /tmp/sshkey_*
     logger "Yo! Finished cleaning up the anomaly detection script."
 
@@ -48,7 +49,7 @@ clean_env(){
 # Generate Anomalies:
 # copies /bin/echo into a unique tmp file and executes it
 anomaly(){
-    echo "Creating 10 anamalous processes!"
+    echo "Creating 10 + 1 anamalous processes!"
     tmp1=$(mktemp $(date +"%Y-%m-%d_%T_XXXX")) && cp /bin/echo /tmp/$tmp1 && chmod +x /tmp/$tmp1 && /tmp/./$tmp1 Hello Anomaly
     tmp2=$(mktemp $(date +"%Y-%m-%d_%T_XXXXX")) && cp /bin/echo /tmp/$tmp2 && chmod +x /tmp/$tmp2 && /tmp/./$tmp2 Hello Anomaly
     tmp3=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXX")) && cp /bin/echo /tmp/$tmp3 && chmod +x /tmp/$tmp3 && /tmp/./$tmp3 Hello Anomaly
@@ -59,7 +60,7 @@ anomaly(){
     tmp8=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXXXXXX")) && cp /bin/echo /tmp/$tmp8 && chmod +x /tmp/$tmp8 && /tmp/./$tmp8 Hello Anomaly
     tmp9=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXXXXXXX")) && cp /bin/echo /tmp/$tmp9 && chmod +x /tmp/$tmp9 && /tmp/./$tmp9 Hello Anomaly
     tmp10=$(mktemp $(date +"%Y-%m-%d_%T_XXXXXXXXXXXX")) && cp /bin/echo /tmp/$tmp10 && chmod +x /tmp/$tmp10 && /tmp/./$tmp10 Hello Anomaly
-    tmp11=$(mktemp "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX") && cp /bin/echo /tmp/$tmp11 && chmod +x /tmp/$tmp11 && /tmp/./$tmp11 Hello Unmatched Anomaly
+    tmp11=$(mktemp "NORULEXXXXXXXXXXXXXXXXXXXXXXXXXXXXX") && cp /bin/echo /tmp/$tmp11 && chmod +x /tmp/$tmp11 && /tmp/./$tmp11 Hello Unmatched Anomaly
 }
 
 # Open SSH connection and run interactively.
